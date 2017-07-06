@@ -1,0 +1,6 @@
+{
+    "Laddress": ":3000",
+    "Raddress": "127.0.0.:4000",
+    "MaxLen": 512,
+    "PackFrequncy": 60
+}
