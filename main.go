@@ -3,12 +3,15 @@ package main
 import (
     "os"
     "fmt"
+    "sync"
 )
 
 var (
     server = &Server{
       black_list: map[string]bool{},
       empty_links: map[string]*EmptyLink{},
+      blmutex: new(sync.RWMutex),
+      elmutex: new(sync.Mutex),
     }
 )
 

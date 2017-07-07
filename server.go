@@ -5,6 +5,7 @@ import (
     "fmt"
     "log"
     "time"
+    "sync"
 )
 
 type EmptyLink struct{
@@ -16,27 +17,44 @@ type Server struct {
     l *net.TCPListener
     black_list map[string]bool
     empty_links map[string]*EmptyLink
+    blmutex *sync.RWMutex
+    elmutex *sync.Mutex
 }
 
 func (this *Server) AddBlackIP(ip string) {
+    this.blmutex.Lock()
     this.black_list[ip] = true
+    this.blmutex.Unlock()
+}
+
+func (this *Server)IsBlack(ip string) bool {
+    this.blmutex.RLock()
+    _,ok := this.black_list[ip]
+    this.blmutex.RUnlock()
+    if ok {
+        return true
+    }
+
+    return false
 }
 
 func (this *Server) AddEmptyLink(ip string) {
-    _,ok := this.black_list[ip]
-    if ok {
+    if this.IsBlack(ip) {
         return
     }
 
     now := time.Now().Unix()
+    this.elmutex.Lock()
+    defer this.elmutex.Unlock()
     c,err1 := this.empty_links[ip]
+
     if !err1 {
         this.empty_links[ip] = &EmptyLink{time: now, count: 1}
     } else {
         if(now/60 == c.time/60) {
             c.count++
             if c.count > 20 {
-                this.black_list[ip] = true
+                this.AddBlackIP(ip)
                 log.Printf("ip:%s add to black list, reason: empty link", ip)
                 return
             }
@@ -72,8 +90,7 @@ func (this *Server) AcceptLoop() {
             // 是否在黑名单中
             ip, _, _ := net.SplitHostPort(c.RemoteAddr().String())
             fmt.Printf("新连接 addr=%s\n", ip)
-            _,ok := this.black_list[ip]
-            if ok {
+            if this.IsBlack(ip) {
                 fmt.Printf("连接在黑名单中，关闭")
                 c.Close()
                 continue
