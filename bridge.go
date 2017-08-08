@@ -98,7 +98,7 @@ func (this *Bridge) readFirstPack() bool {
 }
 
 func (this *Bridge) CheckPack() (bool, int) {
-    start := 0
+    /*start := 0
     for {
         check,n := this.CheckOnePack(start)
         fmt.Println(check, n)
@@ -112,7 +112,8 @@ func (this *Bridge) CheckPack() (bool, int) {
         if start == this.buf_i {
             break
         }
-    }
+    }*/
+    start := this.buf_i
 
     return true, start
 }
